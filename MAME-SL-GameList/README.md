@@ -10,4 +10,4 @@
 
 3. 四个导出按钮只有MMO没有完成。input右边有两个按钮，置顶就是把input为空的数据行置顶，还原就是按照NO.排序显示。
 
-![](https://wolffy1998.github.io/MAME-SL-GameList/image/image.png)
+![](https://wolffy1998.github.io/Simulator-Tools/MAME-SL-GameList/image/image.png)
