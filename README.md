@@ -1,15 +1,6 @@
 # MAME SL GameList编辑器
 
-<<<<<<< HEAD
 如果需要汉化中文家用机游戏列表，需要修改mame/hase/文件夹内的.xml文件内的description标签内容，基于此设计了一个简单的编辑器。
-=======
-| 文件夹名称         | 工具介绍                    |
-| ------------------ | --------------------------- |
-| MAME-SL-GameList    | MAME SL 游戏列表编辑器      |
-| RetroArch-GameList  | RetroArch 游戏列表排序工具  |
-| CheatCodeTranslator | RetroArch 金手指汉化工具    |
-
->>>>>>> 1acded64d119674e8db71bd8789bfa82fa9c5ff3
 
 **以下介绍如何使用此编辑器：**
 
@@ -19,4 +10,4 @@
 
 3. 四个导出按钮只有MMO没有完成。input右边有两个按钮，置顶就是把input为空的数据行置顶，还原就是按照NO.排序显示。
 
-![](https://wolffy1998.github.io/Simulator-Tools/MAME-SL-GameList/image/image.png)
+![](https://wolffy1998.github.io/MAME-SL-GameList/image/image.png)
