@@ -1,0 +1,644 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MAME SL GameList编辑器</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/aplayer/dist/APlayer.min.css">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f4f4f9;
+            color: #333;
+        }
+        h1 {
+            text-align: center; /* Center the title */
+            color: #4a90e2;
+        }
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #fff;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+        }
+        .upload-container {
+            display: flex;
+            align-items: center; /* Vertically center items */
+            justify-content: space-between; /* Space between items */
+            margin-bottom: 8px; /* Set margin to 8px */
+        }
+        .upload-container input[type="file"] {
+            padding: 8px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        .upload-container button {
+            padding: 10px 20px;
+            border: none;
+            background-color: #4a90e2;
+            color: white;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-left: 10px;
+            width: 120px; /* Set uniform width for buttons */
+        }
+        .upload-container button:hover,
+        .sort-button {
+            background-color: #3a7ab9;
+        }
+        .error-message {
+            color: red;
+            margin-top: 10px;
+            text-align: center;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 12px;
+            text-align: left;
+        }
+        th {
+            background-color: #4a90e2;
+            color: white;
+        }
+        tr:nth-child(even) {
+            background-color: #f2f2f2;
+        }
+        tr:hover {
+            background-color: #ddd;
+        }
+        input[type="text"] {
+            width: calc(100% - 20px); /* Adjusted width for buttons */
+            box-sizing: border-box;
+            padding: 8px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-weight: bold;
+            color: #ff6347; /* Tomato (light red) */
+        }
+        td.name-column {
+            font-weight: bold;
+            color: #228B22; /* Dark green */
+        }
+        .loading-modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0, 0, 0, 0.5);
+        }
+        .modal-content {
+            background-color: #fefefe;
+            margin: 15% auto;
+            padding: 20px;
+            border: 1px solid #888;
+            width: 80%;
+            max-width: 300px;
+            text-align: center;
+        }
+        .sort-button { /* Styling for sort and reset buttons */
+            padding: 5px 10px;
+            border: 1px solid #90ee90; /* Light green border */
+            background-color: transparent;
+            color: #ffffff; /* White color */
+            border-radius: 5px;
+            cursor: pointer;
+            margin-left: 5px; /* Reduced margin between buttons */
+            font-weight: bold;
+        }
+        .table-header-input-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .table-header-buttons {
+            display: flex;
+            align-items: center;
+        }
+        .right-aligned-container {
+            display: flex;
+            align-items: center;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>MAME SL GameList编辑器</h1>
+    <div class="first-upload-container upload-container">
+        <div>
+            <input type="file" id="firstXmlFileInput" accept=".xml">
+            <button id="exportMmoButton" disabled>导出MMO</button>
+        </div>
+        <div class="right-aligned-container">
+            <input type="file" id="secondXmlFileInput" accept=".xml" disabled>
+            <button id="downloadXmlButton" disabled>导出XML</button>
+        </div>
+    </div>
+    <div class="second-upload-container upload-container">
+        <div>
+            <input type="file" id="lstFileInput" accept=".lst" disabled>
+            <button id="exportLstButton" disabled>导出LST</button>
+        </div>
+        <div class="right-aligned-container">
+            <input type="file" id="csvFileInput" accept=".csv" disabled>
+            <button id="downloadCsvButton" disabled>导出CSV</button>
+        </div>
+    </div>
+    <div class="error-message" id="errorMessage"></div>
+    
+    <!-- 音乐播放器 -->
+    <meting-js
+        id="2080319176"
+        lrc-type="0"
+        server="netease"
+        order="random"
+        type="playlist"
+        fixed="true"
+        autoplay="true"
+        list-folded="true">
+    </meting-js>
+
+    <table id="dataTable">
+        <thead>
+            <tr>
+                <th>No.</th>
+                <th>Name</th>
+                <th>Description</th>
+                <th style="width: 30%; text-align: right;">
+                    <div class="table-header-input-container">
+                        Input
+                        <div class="table-header-buttons">
+                            <button id="sortRowsButton" disabled class="sort-button">置顶</button>
+                            <button id="resetOrderButton" disabled class="sort-button">还原</button>
+                        </div>
+                    </div>
+                </th>
+            </tr>
+        </thead>
+        <tbody>
+            <!-- Data rows will be inserted here -->
+        </tbody>
+    </table>
+</div>
+
+<!-- Loading Modal -->
+<div id="loadingModal" class="loading-modal">
+    <div class="modal-content">
+        请稍等，正在处理中...
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/aplayer/dist/APlayer.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/meting@2/dist/Meting.min.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    let firstParsedXmlDoc = null;
+    const inputValues = {};
+    let originalFileName = '';
+
+    // Ensure all elements are available before adding event listeners
+    const firstXmlFileInput = document.getElementById('firstXmlFileInput');
+    const secondXmlFileInput = document.getElementById('secondXmlFileInput');
+    const lstFileInput = document.getElementById('lstFileInput');
+    const csvFileInput = document.getElementById('csvFileInput');
+    const downloadXmlButton = document.getElementById('downloadXmlButton');
+    const exportLstButton = document.getElementById('exportLstButton');
+    const downloadCsvButton = document.getElementById('downloadCsvButton');
+    const sortRowsButton = document.getElementById('sortRowsButton');
+    const resetOrderButton = document.getElementById('resetOrderButton');
+
+    if (firstXmlFileInput) {
+        firstXmlFileInput.addEventListener('change', function(event) {
+            const file = event.target.files[0];
+            if (file && file.name.endsWith('.xml')) {
+                originalFileName = file.name.replace(/\.xml$/, '');
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const xmlData = e.target.result;
+                    parseFirstXMLAndDisplay(xmlData);
+                    enableSecondRowButtons();
+                    document.getElementById('errorMessage').textContent = '';
+                };
+                reader.readAsText(file);
+            } else {
+                document.getElementById('errorMessage').textContent = '请上传有效的XML文件。';
+                disableSecondRowButtons();
+            }
+        });
+    }
+
+    if (secondXmlFileInput) {
+        secondXmlFileInput.addEventListener('change', function(event) {
+            if (!firstParsedXmlDoc) {
+                document.getElementById('errorMessage').textContent = '请先上传第一个XML文件';
+                return;
+            }
+
+            const file = event.target.files[0];
+            if (file && file.name.endsWith('.xml')) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const xmlData = e.target.result;
+                    parseSecondXMLAndUpdateInputs(xmlData);
+                };
+                reader.readAsText(file);
+            } else {
+                document.getElementById('errorMessage').textContent = '请上传有效的XML文件。';
+            }
+        });
+    }
+
+    if (lstFileInput) {
+        lstFileInput.addEventListener('change', function(event) {
+            if (!firstParsedXmlDoc) {
+                document.getElementById('errorMessage').textContent = '请先上传第一个XML文件';
+                return;
+            }
+
+            const file = event.target.files[0];
+            if (file && file.name.endsWith('.lst')) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const lstDataString = e.target.result;
+                    parseLST(lstDataString);
+                };
+                reader.readAsText(file);
+            } else {
+                document.getElementById('errorMessage').textContent = '请上传有效的LST文件。';
+            }
+        });
+    }
+
+    if (csvFileInput) {
+        csvFileInput.addEventListener('change', function(event) {
+            if (!firstParsedXmlDoc) {
+                document.getElementById('errorMessage').textContent = '请先上传第一个XML文件';
+                return;
+            }
+
+            const file = event.target.files[0];
+            if (file && file.name.endsWith('.csv')) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const csvDataString = e.target.result;
+                    parseCSV(csvDataString);
+                };
+                reader.readAsText(file);
+            } else {
+                document.getElementById('errorMessage').textContent = '请上传有效的CSV文件。';
+            }
+        });
+    }
+
+    if (downloadXmlButton) {
+        downloadXmlButton.addEventListener('click', function() {
+            if (!firstParsedXmlDoc) {
+                showLoadingModal('请上传MAME SL.xml文件');
+                setTimeout(hideLoadingModal, 2000); // Hide after 2 seconds
+                return;
+            }
+
+            let processingTimeout = setTimeout(() => {
+                showLoadingModal('请稍等，正在处理中...');
+            }, 3000);
+
+            setTimeout(() => {
+                clearTimeout(processingTimeout);
+                const xmlDoc = firstParsedXmlDoc.cloneNode(true);
+                const softwareList = xmlDoc.getElementsByTagName("software");
+
+                for (let i = 0; i < softwareList.length; i++) {
+                    const software = softwareList[i];
+                    const name = software.getAttribute("name");
+                    const inputElement = Array.from(document.querySelectorAll('#dataTable tbody tr')).find(tr => tr.cells[1].textContent === name)?.querySelector('td:last-child input');
+                    const inputValue = inputElement ? inputElement.value.trim() : '';
+
+                    if (inputValue !== '') {
+                        const descriptionElement = software.getElementsByTagName("description")[0];
+                        descriptionElement.textContent = inputValue;
+                    }
+                }
+
+                const serializer = new XMLSerializer();
+                const modifiedXmlString = serializer.serializeToString(xmlDoc);
+
+                const blob = new Blob([modifiedXmlString], { type: 'application/xml' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `${originalFileName}.xml`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+
+                hideLoadingModal();
+            }, 10000); // Simulate processing time of 10 seconds
+        });
+    }
+
+    if (downloadCsvButton) {
+        downloadCsvButton.addEventListener('click', function() {
+            if (!firstParsedXmlDoc) {
+                showLoadingModal('请上传MAME SL.xml文件');
+                setTimeout(hideLoadingModal, 2000); // Hide after 2 seconds
+                return;
+            }
+
+            let processingTimeout = setTimeout(() => {
+                showLoadingModal('请稍等，正在处理中...');
+            }, 3000);
+
+            setTimeout(() => {
+                clearTimeout(processingTimeout);
+                const softwareList = firstParsedXmlDoc.getElementsByTagName("software");
+                let csvContent = "No.,Name,Description,Input\n";
+
+                for (let i = 0; i < softwareList.length; i++) {
+                    const software = softwareList[i];
+                    const name = software.getAttribute("name");
+                    const description = software.getElementsByTagName("description")[0].textContent;
+                    const inputElement = Array.from(document.querySelectorAll('#dataTable tbody tr')).find(tr => tr.cells[1].textContent === name)?.querySelector('td:last-child input');
+                    const inputValue = inputElement ? inputElement.value.trim() : '';
+
+                    csvContent += `${i + 1},"${name}","${description}","${inputValue}"\n`;
+                }
+
+                const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `${originalFileName}.csv`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+
+                hideLoadingModal();
+            }, 10000); // Simulate processing time of 10 seconds
+        });
+    }
+
+    if (exportLstButton) {
+        exportLstButton.addEventListener('click', function() {
+            if (!firstParsedXmlDoc) {
+                showLoadingModal('请上传MAME SL.xml文件');
+                setTimeout(hideLoadingModal, 2000); // Hide after 2 seconds
+                return;
+            }
+
+            let processingTimeout = setTimeout(() => {
+                showLoadingModal('请稍等，正在处理中...');
+            }, 3000);
+
+            setTimeout(() => {
+                clearTimeout(processingTimeout);
+                const rows = document.querySelectorAll('#dataTable tbody tr');
+                let lstContent = "";
+
+                rows.forEach(row => {
+                    const nameCell = row.querySelector('td.name-column');
+                    const name = nameCell.textContent.trim();
+                    const inputCell = row.querySelector('td:last-child input');
+                    const inputValue = inputCell.value.trim();
+
+                    if (/[\u4e00-\u9fa5]/.test(inputValue) && inputValue !== '') {
+                        lstContent += `${name}\t${inputValue}\t${inputValue}\n`;
+                    }
+                });
+
+                const blob = new Blob([lstContent], { type: 'text/plain;charset=utf-8;' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `${originalFileName}_mame32j.lst`; // Updated filename
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+
+                hideLoadingModal();
+            }, 10000); // Simulate processing time of 10 seconds
+        });
+    }
+
+    if (sortRowsButton) {
+        sortRowsButton.addEventListener('click', function() {
+            sortTableRowsByInput();
+        });
+    }
+
+    if (resetOrderButton) {
+        resetOrderButton.addEventListener('click', function() {
+            resetTableRowsToOriginalOrder();
+        });
+    }
+
+    function showLoadingModal(message) {
+        document.getElementById('loadingModal').style.display = 'block';
+        document.querySelector('.modal-content').textContent = message;
+    }
+
+    function hideLoadingModal() {
+        document.getElementById('loadingModal').style.display = 'none';
+    }
+
+    function sortTableRowsByInput() {
+        const tbody = document.querySelector("#dataTable tbody");
+        const rows = Array.from(tbody.rows);
+
+        rows.sort((rowA, rowB) => {
+            const inputA = rowA.querySelector('td:last-child input').value.trim();
+            const inputB = rowB.querySelector('td:last-child input').value.trim();
+            return inputA.localeCompare(inputB);
+        });
+
+        rows.forEach(row => tbody.appendChild(row));
+    }
+
+    function resetTableRowsToOriginalOrder() {
+        const tbody = document.querySelector("#dataTable tbody");
+        const rows = Array.from(tbody.rows);
+
+        rows.sort((rowA, rowB) => {
+            const noA = parseInt(rowA.cells[0].textContent, 10);
+            const noB = parseInt(rowB.cells[0].textContent, 10);
+            return noA - noB;
+        });
+
+        rows.forEach(row => tbody.appendChild(row));
+    }
+
+    function enableSecondRowButtons() {
+        secondXmlFileInput.disabled = false;
+        lstFileInput.disabled = false;
+        csvFileInput.disabled = false;
+        exportLstButton.disabled = false;
+        downloadXmlButton.disabled = false;
+        downloadCsvButton.disabled = false;
+    }
+
+    function disableSecondRowButtons() {
+        secondXmlFileInput.disabled = true;
+        lstFileInput.disabled = true;
+        csvFileInput.disabled = true;
+        exportLstButton.disabled = true;
+        downloadXmlButton.disabled = true;
+        downloadCsvButton.disabled = true;
+    }
+
+    function parseFirstXMLAndDisplay(xmlData) {
+        const parser = new DOMParser();
+        firstParsedXmlDoc = parser.parseFromString(xmlData, "application/xml");
+        const softwareList = firstParsedXmlDoc.getElementsByTagName("software");
+        
+        const tbody = document.querySelector("#dataTable tbody");
+        tbody.innerHTML = ''; // Clear previous data
+        
+        for (let i = 0; i < softwareList.length; i++) {
+            const software = softwareList[i];
+            const name = software.getAttribute("name");
+            const description = software.getElementsByTagName("description")[0].textContent;
+            
+            const row = document.createElement("tr");
+            
+            const noCell = document.createElement("td");
+            noCell.textContent = i + 1;
+            row.appendChild(noCell);
+            
+            const nameCell = document.createElement("td");
+            nameCell.className = 'name-column'; // Add class for styling
+            nameCell.textContent = name;
+            row.appendChild(nameCell);
+            
+            const descriptionCell = document.createElement("td");
+            descriptionCell.textContent = description;
+            row.appendChild(descriptionCell);
+            
+            const inputCell = document.createElement("td");
+            const input = document.createElement("input");
+            input.type = "text";
+            input.value = inputValues[name] || '';
+            input.addEventListener('input', () => {
+                inputValues[name] = input.value;
+            });
+            inputCell.appendChild(input);
+
+            row.appendChild(inputCell);
+            
+            tbody.appendChild(row);
+        }
+
+        downloadXmlButton.disabled = false;
+        downloadCsvButton.disabled = false;
+        sortRowsButton.disabled = false;
+        resetOrderButton.disabled = false;
+        exportLstButton.disabled = false;
+        secondXmlFileInput.disabled = false;
+        lstFileInput.disabled = false;
+        csvFileInput.disabled = false;
+    }
+
+    function parseSecondXMLAndUpdateInputs(xmlData) {
+        const parser = new DOMParser();
+        const secondParsedXmlDoc = parser.parseFromString(xmlData, "application/xml");
+        const secondSoftwareList = secondParsedXmlDoc.getElementsByTagName("software");
+
+        for (let j = 0; j < secondSoftwareList.length; j++) {
+            const secondSoftware = secondSoftwareList[j];
+            const secondName = secondSoftware.getAttribute("name");
+            const secondDescription = secondSoftware.getElementsByTagName("description")[0].textContent;
+
+            const inputElement = Array.from(document.querySelectorAll('#dataTable tbody tr')).find(tr => tr.cells[1].textContent === secondName)?.querySelector('td:last-child input');
+            if (inputElement) {
+                inputElement.value = secondDescription;
+                inputValues[secondName] = secondDescription;
+            }
+        }
+    }
+
+    function parseLST(lstDataString) {
+        const lines = lstDataString.split('\n');
+        const lstData = [];
+        for (let i = 0; i < lines.length; i++) {
+            const cells = lines[i].split('\t');
+            if (cells.length >= 2) {
+                lstData.push({
+                    name: cells[0].trim(),
+                    value: cells[1].trim()
+                });
+            }
+        }
+
+        const rows = document.querySelectorAll('#dataTable tbody tr');
+        rows.forEach(row => {
+            const nameCell = row.querySelector('td.name-column');
+            const name = nameCell.textContent.trim();
+            const inputCell = row.querySelector('td:last-child input');
+
+            const matchingEntry = lstData.find(entry => entry.name === name);
+            if (matchingEntry) {
+                inputCell.value = matchingEntry.value;
+                inputValues[name] = inputCell.value;
+            }
+        });
+    }
+
+    function parseCSV(csvDataString) {
+        const csvStringrs = csvDataString.replace(/"/g, '');
+        const lines = csvStringrs.split('\n');
+        const csvData = [];
+
+        for (let i = 0; i < lines.length; i++) { // Start from 0 as there is no header
+            // const cells = lines[i].split(',');
+            const indexOfComma = lines[i].indexOf(',');
+            let result = [];
+            if (indexOfComma !== -1) {
+                // 逗号前的部分
+                result.push(lines[i].substring(0, indexOfComma));  
+                // 逗号后的所有部分
+                result.push(lines[i].substring(indexOfComma + 1));  
+            } else {
+                // 如果没有逗号，整个字符串作为一个元素
+                result.push(lines[i]);
+            }
+            if (result.length >= 2) {
+                csvData.push({
+                    name: result[0].trim(), // First column is Name
+                    value: result[1].trim()  // Second column is Input
+                });
+            }
+        }
+
+        const rows = document.querySelectorAll('#dataTable tbody tr');
+        rows.forEach(row => {
+            const nameCell = row.querySelector('td.name-column');
+            const name = nameCell.textContent.trim();
+            const inputCell = row.querySelector('td:last-child input');
+
+            const prefixedName = `${originalFileName}_${name}`;
+            const matchingEntry = csvData.find(entry => entry.name === prefixedName);
+            if (matchingEntry && /[\u4e00-\u9fa5]/.test(matchingEntry.value)) {
+                inputCell.value = matchingEntry.value;
+                inputValues[name] = inputCell.value;
+            }
+        });
+    }
+});
+</script>
+
+</body>
+</html>
