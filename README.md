@@ -1,2 +1,7 @@
-# MAME-SL-GameList
-MAME SL GameList编辑器
+# MAME SL GameList编辑器
+
+第一行第一个上传xml文件建议选择最新英文描述的.xml家用机游戏列表文件。
+
+其余三个上传文件分别为导入XML文件、LST文件、CSV文件。导入后会把已经汉化的描述填充到Input框内。四个导出按钮只有MMO没有完成。
+
+input右边有两个按钮，置顶就是把input为空的数据行置顶，还原就是按照NO.排序显示。如果存在有乱码的情况，可以尝试把导入的文件编码改为UTF-8。
