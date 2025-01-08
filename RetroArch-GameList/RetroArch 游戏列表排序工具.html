@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RetroArch 游戏列表排序</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background-image: url('https://cdn-fusion.imgcdn.store/i/2025/f8a9e4fdaaed2035.jpg'); /* 添加背景图片 */
+            background-size: cover;
+            background-position: center;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+        .container {
+            background-color: rgba(255, 255, 255, 0.9); /* 设置半透明背景色 */
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            padding: 30px;
+            width: 100%;
+            max-width: 600px;
+            text-align: left; /* Change text alignment to left */
+            margin-top: -70px; /* 外层白色边框往上移动70px */
+        }
+        h1 {
+            color: #333;
+            text-align: center; /* Center the title */
+        }
+        input[type="file"] {
+            margin-bottom: 20px;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            width: 100%; /* Make file input full width */
+            box-sizing: border-box;
+        }
+        button {
+            padding: 10px 20px;
+            background-color: #007bff;
+            color: #fff;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+            margin-right: 10px;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        pre {
+            background-color: #f4f4f4;
+            padding: 15px;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            margin-top: 20px;
+            border-radius: 4px;
+            overflow-y: auto;
+            max-height: 300px;
+            font-size: 14px;
+            line-height: 1.5;
+            text-align: left; /* Ensure pre content is left-aligned */
+        }
+        .json-key {
+            color: #007bff;
+        }
+        .json-string {
+            color: #228b22;
+        }
+        .json-number {
+            color: #ff4500;
+        }
+        .json-null {
+            color: #a9a9a9;
+        }
+        .json-boolean {
+            color: #daa520;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>RetroArch 游戏列表排序</h1>
+    <input type="file" id="fileInput" accept=".lpl">
+    <div style="text-align: center;">
+        <button onclick="loadFile()">加载文件</button>
+        <button onclick="checkAndSortData()" id="sortButton">排序</button>
+        <button onclick="checkAndAddPinyinPrefix()" id="pinyinButton">添加首字母</button>
+        <button onclick="checkAndDownloadSortedData()" id="downloadButton">下载</button>
+    </div>
+    <pre id="output"></pre>
+</div>
+
+<script src="https://unpkg.com/pinyin-pro@3.26.0/dist/index.js"></script>
+<script>
+    let data = null;
+
+    function customSort(a, b) {
+        const charA = a.charAt(0);
+        const charB = b.charAt(0);
+
+        // Check if characters are digits
+        if (!isNaN(charA) && !isNaN(charB)) {
+            return Number(charA) - Number(charB);
+        } else if (!isNaN(charA)) {
+            return -1; // Digits come before letters and Chinese characters
+        } else if (!isNaN(charB)) {
+            return 1;
+        }
+
+        // Check if characters are letters
+        if (charA >= 'A' && charA <= 'Z' || charA >= 'a' && charA <= 'z') {
+            if (charB >= 'A' && charB <= 'Z' || charB >= 'a' && charB <= 'z') {
+                return charA.localeCompare(charB);
+            } else {
+                return -1; // Letters come before Chinese characters
+            }
+        } else if (charB >= 'A' && charB <= 'Z' || charB >= 'a' && charB <= 'z') {
+            return 1;
+        }
+
+        // Both characters are Chinese or other non-digit/letter characters
+        return charA.localeCompare(charB);
+    }
+
+    function loadFile() {
+        const fileInput = document.getElementById('fileInput');
+        const file = fileInput.files[0];
+        
+        if (!file) {
+            alert('请上传游戏列表');
+            return;
+        }
+
+        const reader = new FileReader();
+        reader.onload = function(event) {
+            try {
+                data = JSON.parse(event.target.result);
+                if (data.items && Array.isArray(data.items)) {
+                    // Enable buttons after successful file loading
+                    document.getElementById('sortButton').disabled = false;
+                    document.getElementById('pinyinButton').disabled = false;
+                    document.getElementById('downloadButton').disabled = false;
+                    
+                    // Alert user that the file has been loaded successfully
+                    alert('文件加载成功');
+                } else {
+                    alert('文件格式不正确，缺少 items 数组');
+                }
+            } catch (error) {
+                console.error('解析文件时出错:', error);
+                alert('无法解析文件，请检查文件格式是否正确');
+            }
+        };
+        reader.readAsText(file);
+    }
+
+    function checkAndSortData() {
+        if (!data || !data.items || !Array.isArray(data.items)) {
+            alert('请先点击加载文件');
+            return;
+        }
+        sortData();
+    }
+
+    function checkAndAddPinyinPrefix() {
+        if (!data || !data.items || !Array.isArray(data.items)) {
+            alert('请先点击加载文件');
+            return;
+        }
+        addPinyinPrefix();
+    }
+
+    function checkAndDownloadSortedData() {
+        if (!data || !data.items || !Array.isArray(data.items)) {
+            alert('请先点击加载文件');
+            return;
+        }
+        downloadSortedData();
+    }
+
+    function sortData() {
+        data.items.sort((a, b) => customSort(a.label, b.label));
+
+        // Display sorted data in the pre tag
+        document.getElementById('output').innerHTML = syntaxHighlight(JSON.stringify(data, null, 2));
+    }
+
+    function addPinyinPrefix() {
+        data.items.forEach(item => {
+            const firstChar = item.label.charAt(0);
+            if (/[\u4e00-\u9fa5]/.test(firstChar)) { // Check if the character is Chinese
+                const pinyinInitial = pinyinPro.pinyin(firstChar, { pattern: 'first', toneType: 'none' });
+                item.label = pinyinInitial.toUpperCase() + ' ' + item.label;
+            }
+        });
+
+        // Display updated data in the pre tag
+        document.getElementById('output').innerHTML = syntaxHighlight(JSON.stringify(data, null, 2));
+    }
+
+    function downloadSortedData() {
+        // Create a Blob and download link
+        const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = document.getElementById('fileInput').files[0].name; // Add prefix to filename
+        a.click();
+        URL.revokeObjectURL(url);
+    }
+
+    function syntaxHighlight(json) {
+        json = json.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+        return json.replace(/("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"|true|false|null|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g, function(match) {
+            var cls = 'number';
+            if (/^"/.test(match)) {
+                if (/:$/.test(match)) {
+                    cls = 'json-key';
+                } else {
+                    cls = 'json-string';
+                }
+            } else if (/true|false/.test(match)) {
+                cls = 'json-boolean';
+            } else if (/null/.test(match)) {
+                cls = 'json-null';
+            }
+            return '<span class="' + cls + '">' + match + '</span>';
+        });
+    }
+</script>
+
+</body>
+</html>
