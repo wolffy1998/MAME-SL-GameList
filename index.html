@@ -631,7 +631,8 @@ document.addEventListener('DOMContentLoaded', function() {
             const name = nameCell.textContent.trim();
             const inputCell = row.querySelector('td:last-child input');
 
-            const prefixedName = `${originalFileName}_${name}`;
+            const prefixedName = `${originalFileName.replace("_", "")}_${name}`;
+            console.log(prefixedName);
             const matchingEntry = csvData.find(entry => entry.name === prefixedName);
             if (matchingEntry && /[\u4e00-\u9fa5]/.test(matchingEntry.value)) {
                 inputCell.value = matchingEntry.value;
