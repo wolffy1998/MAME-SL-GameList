@@ -582,23 +582,12 @@ document.addEventListener('DOMContentLoaded', function() {
     function parseLST(lstDataString) {
         const lines = lstDataString.split('\n');
         const lstData = [];
-        for (let i = 0; i < lines.length; i++) { // Start from 0 as there is no header
-            // const cells = lines[i].split(',');
-            const indexOfComma = lines[i].indexOf(',');
-            let result = [];
-            if (indexOfComma !== -1) {
-                // 逗号前的部分
-                result.push(lines[i].substring(0, indexOfComma));  
-                // 逗号后的所有部分
-                result.push(lines[i].substring(indexOfComma + 1));  
-            } else {
-                // 如果没有逗号，整个字符串作为一个元素
-                result.push(lines[i]);
-            }
-            if (result.length >= 2) {
+        for (let i = 0; i < lines.length; i++) {
+            const cells = lines[i].split('\t');
+            if (cells.length >= 2) {
                 lstData.push({
-                    name: result[0].trim(), // First column is Name
-                    value: result[1].trim()  // Second column is Input
+                    name: cells[0].trim(),
+                    value: cells[1].trim()
                 });
             }
         }
@@ -609,10 +598,8 @@ document.addEventListener('DOMContentLoaded', function() {
             const name = nameCell.textContent.trim();
             const inputCell = row.querySelector('td:last-child input');
 
-            const prefixedName = `${originalFileName.replace(/_+/g, '')}_${name}`;
-            console.log(prefixedName);
-            const matchingEntry = lstData.find(entry => entry.name === prefixedName);
-            if (matchingEntry && /[\u4e00-\u9fa5]/.test(matchingEntry.value)) {
+            const matchingEntry = lstData.find(entry => entry.name === name);
+            if (matchingEntry) {
                 inputCell.value = matchingEntry.value;
                 inputValues[name] = inputCell.value;
             }
