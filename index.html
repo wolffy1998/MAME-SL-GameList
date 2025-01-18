@@ -315,7 +315,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
             let processingTimeout = setTimeout(() => {
                 showLoadingModal('请稍等，正在处理中...');
-            }, 3000);
+            }, 2000);
 
             setTimeout(() => {
                 clearTimeout(processingTimeout);
@@ -369,7 +369,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
             let processingTimeout = setTimeout(() => {
                 showLoadingModal('请稍等，正在处理中...');
-            }, 3000);
+            }, 2000);
 
             setTimeout(() => {
                 clearTimeout(processingTimeout);
@@ -411,7 +411,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
             let processingTimeout = setTimeout(() => {
                 showLoadingModal('请稍等，正在处理中...');
-            }, 3000);
+            }, 2000);
 
             setTimeout(() => {
                 clearTimeout(processingTimeout);
@@ -570,11 +570,14 @@ document.addEventListener('DOMContentLoaded', function() {
             const secondSoftware = secondSoftwareList[j];
             const secondName = secondSoftware.getAttribute("name");
             const secondDescription = secondSoftware.getElementsByTagName("description")[0].textContent;
-
-            const inputElement = Array.from(document.querySelectorAll('#dataTable tbody tr')).find(tr => tr.cells[1].textContent === secondName)?.querySelector('td:last-child input');
-            if (inputElement) {
-                inputElement.value = secondDescription;
-                inputValues[secondName] = secondDescription;
+            console.log(secondDescription);
+            const pattern = /[\u4e00-\u9fa5]/;
+            if(pattern.test(secondDescription)) {
+                const inputElement = Array.from(document.querySelectorAll('#dataTable tbody tr')).find(tr => tr.cells[1].textContent === secondName)?.querySelector('td:last-child input');
+                if (inputElement) {
+                    inputElement.value = secondDescription;
+                    inputValues[secondName] = secondDescription;
+                }
             }
         }
     }
